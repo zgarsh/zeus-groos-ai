@@ -11,6 +11,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# diagnostics
+print("✅ .env loaded")
+print("🔑 OpenAI key starts with:", os.getenv("OPENAI_API_KEY")[:5])
+print("📡 Gmail sender:", os.getenv("MY_EMAIL"))
+
 
 #### FUNCTION DEFINITIONS #####
 def refresh_access_token():
@@ -23,8 +28,10 @@ def refresh_access_token():
             "grant_type": "refresh_token",
         }
     )
-    print(res.status_code)
-    print(res.json())
+    # print(res.status_code)
+    # print(res.json())
+    print(f"🔄 Refresh token response code: {res.status_code}")
+    print("📥 Token refresh response:", res.json())
     res.raise_for_status()
     return res.json()["access_token"]
 
