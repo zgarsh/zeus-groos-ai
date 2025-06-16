@@ -1,4 +1,3 @@
-# main.py
 import os
 import requests
 import pandas as pd
@@ -11,13 +10,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# diagnostics
-print("✅ .env loaded")
-print("🔑 OpenAI key starts with:", os.getenv("OPENAI_API_KEY")[:5])
-print("📡 Gmail sender:", os.getenv("MY_EMAIL"))
-
-
-#### FUNCTION DEFINITIONS #####
 def refresh_access_token():
     res = requests.post(
         "https://www.strava.com/oauth/token",
@@ -28,10 +20,8 @@ def refresh_access_token():
             "grant_type": "refresh_token",
         }
     )
-    # print(res.status_code)
-    # print(res.json())
-    print(f"🔄 Refresh token response code: {res.status_code}")
-    print("📥 Token refresh response:", res.json())
+    print(res.status_code)
+    print(res.json())
     res.raise_for_status()
     return res.json()["access_token"]
 
@@ -95,8 +85,10 @@ def create_good_morning_strava_prompt():
         f"Today is {today}.\n"
         "Here are my most recent Strava activities:\n"
         f"{activity_str}\n\n"
-        """Please send me a good morning text message that includes an encouraging message about my recent strava activity and incorporates today's date.
-        for example, you could tell me how my mileage this week compares to previous weeks or tell me if i've had a particularly fast run recently."""
+        """Please send me a good morning text message that includes a summary of my recent strava activity and incorporates today's date.
+        for example, you could tell me how my mileage this week compares to previous weeks or tell me if i've had a particularly fast run recently.
+        Please also include a n interesting fact about today's date in San Francisco history. Do not make anything up! If you don't have a good SF fact
+        You can expand to California or the US. Please format your message to be sent as an SMS message."""
     )
 
     return(prompt)
@@ -111,6 +103,7 @@ def call_large_model(instructions, prompt):
 
     response = client.responses.create(
         model="gpt-4.1",
+        tools=[{"type": "web_search_preview"}], ###  NEW!!!!  ###
         instructions = instructions,
         input = prompt,
     )
@@ -137,18 +130,14 @@ def send_text_from_email(message_body="nobody told me what to say!"):
     print("Sent!")
 
 
+### MAKE IT HAPPEN ###
 
-
-#### MAKE IT HAPPEN ####
-
-instructions = """You are a supportive life coach and personal trainer named Zeus Groos. Your trainee, Zach, is training for the New York Marathon on November 3 2025.
-            He is doing a half marathon training program that ends on June 29 and then he'll begin the full marathon training program. You should play the role of 
-            an expert coach, giving general running advice as well as specific feedback tailored to your trainee's workout history. This will be sent via SMS so please format accordingly."""
+instructions = """You are a supportive personal trainer and local history expert named Zeus Groos. Your trainee, Zach, is training for the New York Marathon on November 3 2025.
+                You should play the role of an expert coach, giving general running advice as well as specific feedback tailored to your trainee's workout history.
+                This will be sent via SMS so please format accordingly."""
 
 prompt = create_good_morning_strava_prompt()
 
 message_body = call_large_model(instructions=instructions, prompt=prompt)
 
 send_text_from_email(message_body=message_body)
-
-print("sent message!")
